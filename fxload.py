@@ -83,7 +83,10 @@ def writeEzusbVendor_RwInternal(device, addr, data):
     
 def loadHexFirmware(device, filename):
 
-    MAXSIZE = 0x1b40
+    # MAXSIZE_DEFAULT = 0x1b40
+    # CPU program code can go up to 0x1b00. Memory above can access via xdata
+    # If we allow usage of Buf 2-7 for (x)code - we can load up to 0x1e40
+    MAXSIZE = 0x1e40
 
     cpucs_addr = 0x7f92
     stopCPU  = bytes([0x01])
@@ -147,7 +150,14 @@ def main():
     parser = optparse.OptionParser()
     parser.add_option(
         '-f', '--force', action='store_true', default=False, help='Force firmware download to unknown device.' )
+    parser.add_option(
+        '-a', '--ant', action='store_true', default=False, help='Allow (presumable emulated) Dynastream ANT Devices' )
     (options, args) = parser.parse_args()
+
+    global vendors
+
+    if options.ant:
+       vendors = [ VENDOR_TACX , VENDOR_DYNASTREAM ]
 
     # *********************************************************
 
@@ -156,7 +166,7 @@ def main():
 
     if not devices or len(devices) == 0:
         raise ValueError('No Device(s) found')
-
+    
     num_devices_before_firmware = len(devices)
 
     for device in devices:
